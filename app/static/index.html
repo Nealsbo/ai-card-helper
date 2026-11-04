@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f6f7f9">
+  <title>Паспорт → Карточка · AI-помощник</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232e50df'/%3E%3Cpath d='M9 8h10l5 5v11H9z' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M13 16h7m-7 4h7' stroke='white' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/style.css?v=seo-limits-1">
+  <script src="/static/app.js?v=seo-limits-1" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Паспорт — Карточка, главная">
+      <span class="brand-icon" aria-hidden="true">п<span>→</span>к</span>
+      <span>Паспорт <span class="brand-arrow">→</span> Карточка</span>
+    </a>
+    <button id="connection" class="connection" type="button" title="Проверить соединение с API модели">
+      <span id="connection-dot" class="dot"></span><span id="connection-label">Проверить соединение</span>
+    </button>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div>
+        <h1>Карточка товара</h1>
+        <p class="intro-text">Добавьте данные прибора, чтобы подготовить описание.</p>
+      </div>
+    </section>
+
+    <div id="connection-result" class="message" role="status" hidden></div>
+    <div id="page-error" class="message error" role="alert" hidden></div>
+
+    <div class="workspace">
+      <section class="panel input-panel" aria-labelledby="input-heading">
+        <div class="panel-heading"><h2 id="input-heading">Данные прибора</h2></div>
+        <div class="input-toolbar">
+          <div class="segmented" role="group" aria-label="Способ ввода">
+            <button type="button" class="active" id="form-mode" aria-pressed="true">Форма</button>
+            <button type="button" id="json-mode" aria-pressed="false">JSON</button>
+          </div>
+          <label class="example-select"><span class="sr-only">Загрузить учебный пример</span><select id="example-select"><option value="">Загрузить пример…</option></select></label>
+        </div>
+        <div id="demo-notice" class="demo-notice" hidden></div>
+
+        <form id="product-form">
+          <fieldset id="input-fields">
+            <div class="field model-field"><label for="model-select">Модель</label><select id="model-select"><option value="">Из конфигурации / автовыбор</option></select><p class="field-hint">Чтобы загрузить список моделей, нажмите «Проверить соединение».</p></div>
+            <details id="seo-options" class="seo-options">
+              <summary>Размеры SEO-текстов</summary>
+              <p class="field-hint">Символы с пробелами. Изменения применяются к текущей генерации.</p>
+              <div class="seo-size-row"><span>Заголовок</span><label for="seo-title-min">От<input id="seo-title-min" type="number" min="1" step="1" required aria-label="Минимальная длина SEO-заголовка"></label><label for="seo-title-max">До<input id="seo-title-max" type="number" min="1" step="1" required aria-label="Максимальная длина SEO-заголовка"></label></div>
+              <div class="seo-size-row"><span>Описание</span><label for="seo-description-min">От<input id="seo-description-min" type="number" min="1" step="1" required aria-label="Минимальная длина SEO-описания"></label><label for="seo-description-max">До<input id="seo-description-max" type="number" min="1" step="1" required aria-label="Максимальная длина SEO-описания"></label></div>
+              <button id="reset-seo" type="button" class="text-button">Вернуть значения из конфигурации</button>
+            </details>
+            <div id="form-fields">
+              <div class="field"><label for="name">Название товара <span class="required">*</span></label><input id="name" maxlength="300" placeholder="Например, манометр УМ-100" required autocomplete="off"></div>
+              <div class="field"><label for="manufacturer">Производитель <span class="optional">если известен</span></label><input id="manufacturer" maxlength="300" placeholder="Название производителя" autocomplete="off"></div>
+              <div class="field"><div class="field-label"><label>Характеристики</label><span class="optional">Значения с единицами измерения</span></div>
+                <div id="spec-rows"></div>
+                <button type="button" id="add-spec" class="text-button">＋ Добавить характеристику</button>
+              </div>
+              <div class="field description-field"><label for="description">Описание или фрагмент паспорта</label><textarea id="description" maxlength="18000" rows="5" placeholder="Вставьте исходный текст: назначение, условия применения, ограничения…"></textarea><p class="field-hint">При нехватке данных добавьте описание или уменьшите минимальную длину SEO-текста.</p></div>
+            </div>
+            <div id="json-fields" hidden><label for="json-input">Исходные данные в JSON</label><textarea id="json-input" class="code-input" rows="21" spellcheck="false" aria-describedby="json-hint"></textarea><p id="json-hint" class="field-hint">Поля: name, manufacturer, specs, description. Значения specs — строки или null.</p></div>
+          </fieldset>
+          <div class="submit-area"><button type="submit" id="generate" class="primary-button" disabled><span id="generate-label">Подготовить карточку</span></button><p id="generation-hint">Данные отправляются в API, настроенный в .env.</p></div>
+        </form>
+      </section>
+
+      <section class="panel output-panel" aria-labelledby="output-heading" aria-busy="false">
+        <div class="panel-heading"><h2 id="output-heading">Результат</h2><span id="draft-badge" class="badge">ЧЕРНОВИК</span></div>
+        <div class="output-toolbar"><div class="segmented" role="group" aria-label="Вид результата"><button type="button" class="active" data-view="preview" aria-pressed="true">Карточка</button><button type="button" data-view="json" aria-pressed="false">JSON</button><button type="button" data-view="markdown" aria-pressed="false">Markdown</button></div><button type="button" id="copy-all" class="icon-button" disabled>Копировать</button></div>
+
+        <div id="empty-state" class="empty-state"><p>Здесь появится карточка товара.</p></div>
+        <div id="loading-state" class="empty-state" role="status" hidden><div class="loader" aria-hidden="true"></div><h3>Готовим карточку…</h3><span id="elapsed" class="elapsed">0 сек.</span></div>
+
+        <div id="result" hidden>
+          <div id="result-demo" class="demo-notice" hidden></div>
+          <div id="stale-notice" class="message warning" hidden>Входные данные изменены. Ниже показан предыдущий результат — подготовьте карточку заново.</div>
+          <div id="preview"></div>
+          <textarea id="raw-output" class="raw-output" readonly spellcheck="false" aria-label="Результат для копирования" hidden></textarea>
+          <div class="result-footer"><span id="result-meta"></span><div><button type="button" id="download-json" class="text-button">↓ JSON</button><button type="button" id="download-md" class="text-button">↓ Markdown</button></div></div>
+        </div>
+      </section>
+    </div>
+    <footer class="site-footer">Перед публикацией проверьте черновик по паспорту прибора.</footer>
+  </main>
+  <div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>
